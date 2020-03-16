@@ -1,0 +1,99 @@
+buildscript {
+	repositories {
+		maven {
+			url "https://plugins.gradle.org/m2/"
+		}
+	}
+	dependencies {
+		classpath "com.palantir.gradle.docker:gradle-docker:0.25.0"
+	}
+}
+
+plugins {
+	id 'org.springframework.boot' version '2.2.5.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+}
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+apply plugin: 'com.palantir.docker'
+
+group = 'io.karthik'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+def artifactId = "cep-engine"
+def dockerUsername = System.getenv("DOCKER_USERNAME") ?: "${dockerUsername}"
+def dockerPassword = System.getenv("DOCKER_PASSWORD") ?: "${dockerPassword}"
+def dockerEmail = System.getenv("DOCKER_EMAIL") ?: "${dockerEmail}"
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+	mavenLocal()
+	jcenter()
+}
+
+publishing {
+	publications {
+		myLibrary(MavenPublication) {
+			from components.java
+		}
+	}
+	repositories {
+		maven {
+			url 'https://pkgs.dev.azure.com/karthik2r/35fae4dd-5043-4411-ac92-bf37353907f2/_packaging/cep-engine/maven/v1'
+			name 'cep-engine'
+			credentials {
+				username "AZURE_ARTIFACTS"
+				password System.getenv("AZURE_ARTIFACTS_ENV_ACCESS_TOKEN") ?: "${azureArtifactsGradleAccessToken}"
+			}
+//			authentication {
+//				basic(BasicAuthentication)
+//			}
+		}
+	}
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.apache.kafka:kafka-streams'
+	implementation 'org.springframework.kafka:spring-kafka'
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+	testImplementation 'org.springframework.kafka:spring-kafka-test'
+}
+
+test {
+	useJUnitPlatform()
+}
+
+jar {
+	manifest {
+		attributes(
+				'Class-Path': configurations.runtime.files.collect {"$it.name"}.join(' '),
+				'Main-Class': 'io.karthik.cepengine.CepEngineApplication'
+		)
+	}
+	from {
+		configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+	}
+}
+
+docker {
+	name "${dockerUsername}/${artifactId}:v$version"
+	tag "v$version","latest"
+	copySpec.from("build/libs").into("app")
+	dockerfile file("src/main/docker/Dockerfile")
+	noCache true
+}

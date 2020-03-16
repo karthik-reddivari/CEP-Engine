@@ -1,0 +1,86 @@
+pool:
+  vmImage: 'Ubuntu 16.04'
+
+trigger:
+  branches:
+    include:
+      - master
+      - feature/*
+      - bug/*
+
+pr:
+  branches:
+    include:
+      - master
+
+steps:
+  - checkout: self
+    persistCredentials: true
+
+  - task: Gradle@2
+    displayName: 'Building and running tests'
+    inputs:
+      workingDirectory: ''
+      gradleWrapperFile: 'gradlew'
+      gradleOptions: '-Xmx3072m'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.11'
+      jdkArchitectureOption: 'x64'
+      publishJUnitResults: true
+      testResultsFiles: '**/TEST-*.xml'
+      tasks: 'build --info'
+    env:
+      AZURE_ARTIFACTS_ENV_ACCESS_TOKEN: $(AZURE_ARTIFACTS_ENV_ACCESS_TOKEN)
+
+  - task: Gradle@2
+    displayName: 'Publishing maven artifact'
+    inputs:
+      workingDirectory: ''
+      gradleWrapperFile: 'gradlew'
+      gradleOptions: '-Xmx3072m'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.11'
+      jdkArchitectureOption: 'x64'
+      publishJUnitResults: false
+      testResultsFiles: '**/TEST-*.xml'
+      tasks: 'publish --info'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    env:
+      AZURE_ARTIFACTS_ENV_ACCESS_TOKEN: $(AZURE_ARTIFACTS_ENV_ACCESS_TOKEN)
+
+  - task: Gradle@2
+    displayName: 'Building docker image'
+    inputs:
+      workingDirectory: ''
+      gradleWrapperFile: 'gradlew'
+      gradleOptions: '-Xmx3072m'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.8'
+      jdkArchitectureOption: 'x64'
+      tasks: 'docker --info'
+    env:
+      AZURE_ARTIFACTS_ENV_ACCESS_TOKEN: $(AZURE_ARTIFACTS_ENV_ACCESS_TOKEN)
+
+  - script: |
+      docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    env:
+      DOCKER_USERNAME: $(DOCKER_USERNAME)
+      DOCKER_PASSWORD: $(DOCKER_PASSWORD)
+    displayName: 'Logging in to docker'
+
+  - task: Gradle@2
+    displayName: 'Publishing docker image'
+    inputs:
+      workingDirectory: ''
+      gradleWrapperFile: 'gradlew'
+      gradleOptions: '-Xmx3072m'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.11'
+      jdkArchitectureOption: 'x64'
+      publishJUnitResults: false
+      testResultsFiles: '**/TEST-*.xml'
+      tasks: 'dockerPush --info'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    env:
+      AZURE_ARTIFACTS_ENV_ACCESS_TOKEN: $(AZURE_ARTIFACTS_ENV_ACCESS_TOKEN)
