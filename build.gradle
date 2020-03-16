@@ -28,6 +28,8 @@ def artifactId = "cep-engine"
 def dockerUsername = System.getenv("DOCKER_USERNAME") ?: "${dockerUsername}"
 def dockerPassword = System.getenv("DOCKER_PASSWORD") ?: "${dockerPassword}"
 def dockerEmail = System.getenv("DOCKER_EMAIL") ?: "${dockerEmail}"
+def releasesRepoUrl = "https://pkgs.dev.azure.com/karthik2r/35fae4dd-5043-4411-ac92-bf37353907f2/_packaging/cep-engine-releases/maven/v1"
+def snapshotsRepoUrl = "https://pkgs.dev.azure.com/karthik2r/35fae4dd-5043-4411-ac92-bf37353907f2/_packaging/cep-engine-snapshots/maven/v1"
 
 configurations {
 	compileOnly {
@@ -43,21 +45,19 @@ repositories {
 
 publishing {
 	publications {
-		myLibrary(MavenPublication) {
-			from components.java
+		KRLabs(MavenPublication) {
+			artifact "./build/libs/${artifactId}-${version}.jar"
 		}
 	}
+
 	repositories {
 		maven {
-			url 'https://pkgs.dev.azure.com/karthik2r/35fae4dd-5043-4411-ac92-bf37353907f2/_packaging/cep-engine/maven/v1'
+			url version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
 			name 'cep-engine'
 			credentials {
-				username "AZURE_ARTIFACTS"
+				username System.getenv("BUILD_USERNAME") ?: "${buildUsername}"
 				password System.getenv("AZURE_ARTIFACTS_ENV_ACCESS_TOKEN") ?: "${azureArtifactsGradleAccessToken}"
 			}
-//			authentication {
-//				basic(BasicAuthentication)
-//			}
 		}
 	}
 }
@@ -91,8 +91,8 @@ jar {
 }
 
 docker {
-	name "${dockerUsername}/${artifactId}:v$version"
-	tag "v$version","latest"
+	name "${dockerUsername}/${artifactId}:v${version}"
+	tag "Latest", "${dockerUsername}/${artifactId}:latest"
 	copySpec.from("build/libs").into("app")
 	dockerfile file("src/main/docker/Dockerfile")
 	noCache true

@@ -7,6 +7,9 @@ trigger:
       - master
       - feature/*
       - bug/*
+  tags:
+    include:
+      - v*
 
 pr:
   branches:
@@ -18,7 +21,7 @@ steps:
     persistCredentials: true
 
   - task: Gradle@2
-    displayName: 'Building and running tests'
+    displayName: 'Running tests and Building artifacts'
     inputs:
       workingDirectory: ''
       gradleWrapperFile: 'gradlew'
@@ -31,6 +34,21 @@ steps:
       tasks: 'build --info'
     env:
       AZURE_ARTIFACTS_ENV_ACCESS_TOKEN: $(AZURE_ARTIFACTS_ENV_ACCESS_TOKEN)
+      BUILD_USERNAME: $(BUILD_USERNAME)
+
+  - task: Gradle@2
+    displayName: 'Building docker image'
+    inputs:
+      workingDirectory: ''
+      gradleWrapperFile: 'gradlew'
+      gradleOptions: '-Xmx3072m'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.11'
+      jdkArchitectureOption: 'x64'
+      tasks: 'docker --info'
+    env:
+      AZURE_ARTIFACTS_ENV_ACCESS_TOKEN: $(AZURE_ARTIFACTS_ENV_ACCESS_TOKEN)
+      BUILD_USERNAME: $(BUILD_USERNAME)
 
   - task: Gradle@2
     displayName: 'Publishing maven artifact'
@@ -43,23 +61,11 @@ steps:
       jdkArchitectureOption: 'x64'
       publishJUnitResults: false
       testResultsFiles: '**/TEST-*.xml'
-      tasks: 'publish --info'
+      tasks: 'publish --info -Dorg.gradle.internal.publish.checksums.insecure=true'
     condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     env:
       AZURE_ARTIFACTS_ENV_ACCESS_TOKEN: $(AZURE_ARTIFACTS_ENV_ACCESS_TOKEN)
-
-  - task: Gradle@2
-    displayName: 'Building docker image'
-    inputs:
-      workingDirectory: ''
-      gradleWrapperFile: 'gradlew'
-      gradleOptions: '-Xmx3072m'
-      javaHomeOption: 'JDKVersion'
-      jdkVersionOption: '1.8'
-      jdkArchitectureOption: 'x64'
-      tasks: 'docker --info'
-    env:
-      AZURE_ARTIFACTS_ENV_ACCESS_TOKEN: $(AZURE_ARTIFACTS_ENV_ACCESS_TOKEN)
+      BUILD_USERNAME: $(BUILD_USERNAME)
 
   - script: |
       docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
@@ -80,7 +86,8 @@ steps:
       jdkArchitectureOption: 'x64'
       publishJUnitResults: false
       testResultsFiles: '**/TEST-*.xml'
-      tasks: 'dockerPush --info'
+      tasks: 'dockerPush dockerTagsPush --info'
     condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     env:
       AZURE_ARTIFACTS_ENV_ACCESS_TOKEN: $(AZURE_ARTIFACTS_ENV_ACCESS_TOKEN)
+      BUILD_USERNAME: $(BUILD_USERNAME)
