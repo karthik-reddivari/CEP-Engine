@@ -26,8 +26,7 @@ sourceCompatibility = '11'
 
 def artifactId = "cep-engine"
 def dockerUsername = System.getenv("DOCKER_USERNAME") ?: "${dockerUsername}"
-def dockerPassword = System.getenv("DOCKER_PASSWORD") ?: "${dockerPassword}"
-def dockerEmail = System.getenv("DOCKER_EMAIL") ?: "${dockerEmail}"
+def buildUsername = System.getenv("BUILD_USERNAME") ?: "${buildUsername}"
 def releasesRepoUrl = "https://pkgs.dev.azure.com/karthik2r/35fae4dd-5043-4411-ac92-bf37353907f2/_packaging/cep-engine-releases/maven/v1"
 def snapshotsRepoUrl = "https://pkgs.dev.azure.com/karthik2r/35fae4dd-5043-4411-ac92-bf37353907f2/_packaging/cep-engine-snapshots/maven/v1"
 
