@@ -21,7 +21,7 @@ apply plugin: 'maven-publish'
 apply plugin: 'com.palantir.docker'
 
 group = 'io.karthik'
-version = '0.0.1'
+version = '0.0.2-SNAPSHOT'
 sourceCompatibility = '11'
 
 def artifactId = "cep-engine"
