@@ -1,0 +1,113 @@
+version: "3.5"
+services:
+  zk:
+    image: confluentinc/cp-zookeeper:5.4.1
+    container_name: zk
+    ports:
+      - "2888-3888:2888-3888"
+      - "2181:2181"
+    restart: always
+    volumes:
+      - data-zk:/var/lib/zookeeper
+    environment:
+      - ZOOKEEPER_SERVER_ID=1
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+      - ZOOKEEPER_INIT_LIMIT=5
+      - ZOOKEEPER_SYNC_LIMIT=2
+      - ZOOKEEPER_SERVERS=zk:2888:3888
+
+  kafka:
+    image: confluentinc/cp-enterprise-kafka:5.4.1
+    container_name: kafka
+    restart: always
+    hostname: kafka
+    ports:
+      - "9093:9093"
+    volumes:
+      - data-kafka:/var/lib/kafka/data
+    environment:
+      KAFKA_BROKER_ID: 101
+      KAFKA_ZOOKEEPER_CONNECT: zk:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_DELETE_TOPIC_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:5.4.1
+    container_name: schema-registry
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: zk:2181
+      SCHEMA_REGISTRY_LISTENERS: http://schema-registry:8081
+
+  connect:
+    image: confluentinc/cp-kafka-connect:5.4.1
+    container_name: connect
+    hostname: connect
+    restart: always
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./data:/data
+    environment:
+      CONNECT_PRODUCER_INTERCEPTOR_CLASSES: io.confluent.monitoring.clients.interceptor.MonitoringProducerInterceptor
+      CONNECT_CONSUMER_INTERCEPTOR_CLASSES: io.confluent.monitoring.clients.interceptor.MonitoringConsumerInterceptor
+      CONNECT_BOOTSTRAP_SERVERS: kafka:9092
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: "connect"
+      CONNECT_CONFIG_STORAGE_TOPIC: "connect-config"
+      CONNECT_OFFSET_STORAGE_TOPIC: "connect-offsets"
+      CONNECT_STATUS_STORAGE_TOPIC: "connect-status"
+      CONNECT_REPLICATION_FACTOR: 1
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+      CONNECT_VALUE_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+      CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+      CONNECT_REST_ADVERTISED_HOST_NAME: "connect"
+      CONNECT_LOG4J_ROOT_LOGLEVEL: INFO
+      CONNECT_LOG4J_LOGGERS: org.reflections=ERROR
+      CONNECT_PLUGIN_PATH: /usr/share/java
+      CONNECT_REST_HOST_NAME: "connect"
+
+  control-center:
+    image: confluentinc/cp-enterprise-control-center:5.4.1
+    container_name: control-center
+    restart: always
+    ports:
+      - "9021:9021"
+    environment:
+      CONTROL_CENTER_BOOTSTRAP_SERVERS: kafka:9092
+      CONTROL_CENTER_ZOOKEEPER_CONNECT: zk:2181
+      CONTROL_CENTER_REPLICATION_FACTOR: 1
+      CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_REPLICATION: 1
+      CONTROL_CENTER_INTERNAL_TOPICS_REPLICATION: 1
+      CONTROL_CENTER_COMMAND_TOPIC_REPLICATION: 1
+      CONTROL_CENTER_METRICS_TOPIC_REPLICATION: 1
+      CONTROL_CENTER_STREAMS_NUM_STREAM_THREADS: 1
+      CONTROL_CENTER_STREAMS_CONSUMER_REQUEST_TIMEOUT_MS: "960032"
+      CONTROL_CENTER_SCHEMA_REGISTRY_URL: "http://schema-registry:8081"
+
+  data-gen:
+    image: karthik2r/data-gen:v0.0.1
+    container_name: data-gen
+    restart: always
+    environment:
+      FILE_LOCATION: /config/kafka.config.yml
+    volumes:
+      - ./config:/config
+
+volumes:
+  data-zk:
+  data-kafka:
