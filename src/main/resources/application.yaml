@@ -1,0 +1,53 @@
+# Server Config
+server:
+  port: 9009
+
+#Spring config
+spring:
+# Kafka serialization configuration
+  kafka:
+    consumer:
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      key-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+    producer:
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      key-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+  cloud:
+    stream:
+# Kafka Binder configuration
+      kafka:
+        binder:
+          brokers: localhost
+          defaultBrokerPort: 9093
+          producerProperties:
+            client.id: Cep-Engine
+            schema.registry.url: http://localhost:8081
+            requiredAcks: 1
+          consumerProperties:
+            schema.registry.url: http://localhost:8081
+# Defining the binders involved
+      binders:
+        kafka:
+          type: kafka
+# Binding for input and output channels
+      bindings:
+        InputTopic:
+          destination: shipment
+          group: shipment-consumer
+          content-type: application/*+avro
+          binder: kafka
+        OutputTopic:
+          destination: shipment-anomaly
+          group: shipment-filtered-producer
+          content-type: application/*+avro
+          binder: kafka
+          producer:
+            use-native-encoding: true
+
+# Logging Config
+logging:
+  level:
+    root: INFO
+
+cep-properties:
+  schema-location: ${SCHEMA_LOCATION}
