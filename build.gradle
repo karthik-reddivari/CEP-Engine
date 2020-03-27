@@ -12,6 +12,7 @@ buildscript {
 plugins {
 	id 'org.springframework.boot' version '2.2.5.RELEASE'
 	id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+	id 'java'
 }
 
 apply plugin: 'java'
@@ -64,13 +65,19 @@ publishing {
 	}
 }
 
+ext {
+	set('springCloudVersion', "Hoxton.SR3")
+}
+
 dependencies {
+	implementation 'org.apache.kafka:kafka-streams'
+	implementation 'org.springframework.cloud:spring-cloud-stream:3.0.3.RELEASE'
+	implementation 'org.springframework.cloud:spring-cloud-stream-binder-kafka-streams:3.0.3.RELEASE'
 	implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka:3.0.3.RELEASE'
 	implementation 'io.confluent:kafka-avro-serializer:5.4.1'
-	implementation 'io.confluent:kafka-schema-registry-client:5.4.1'
 	implementation 'io.confluent:kafka-streams-avro-serde:5.4.1'
-	implementation 'org.springframework.kafka:spring-kafka'
 	implementation 'org.apache.avro:avro:1.9.1'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

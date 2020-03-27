@@ -4,32 +4,45 @@ server:
 
 #Spring config
 spring:
-# Kafka serialization configuration
-  kafka:
-    consumer:
-      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
-      key-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
-    producer:
-      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
-      key-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
   cloud:
     stream:
-# Kafka Binder configuration
+      # Kafka Binder configuration
       kafka:
         binder:
           brokers: localhost
           defaultBrokerPort: 9093
-          producerProperties:
+          producer-properties:
             client.id: Cep-Engine
             schema.registry.url: http://localhost:8081
             requiredAcks: 1
-          consumerProperties:
+            value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+            key.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+          consumer-properties:
             schema.registry.url: http://localhost:8081
-# Defining the binders involved
+            value.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+            key.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+        # Streams binder configuration
+        streams:
+          binder:
+            brokers: localhost:9093
+            configuration:
+              commit.interval.mms: 1000
+              schema.registry.url: http://localhost:8081
+          bindings:
+            shipment: # name of the topic
+              consumer:
+                applicationId: cep-engine-kstreams
+                valueSerde: io.confluent.kafka.streams.serdes.avro.GenericAvroSerde
+                keySerde: io.confluent.kafka.streams.serdes.avro.GenericAvroSerde
+              group: shipment-consumer-streamer
+
+      # TODO: Enable when needed
+      ## Kafka event processin config
+      ### Defining the binders involved
       binders:
         kafka:
           type: kafka
-# Binding for input and output channels
+      # Binding for input and output channels
       bindings:
         InputTopic:
           destination: shipment
@@ -49,5 +62,11 @@ logging:
   level:
     root: INFO
 
+# Custom properties
 cep-properties:
   schema-location: ${SCHEMA_LOCATION}
+  processors:
+    ShipmentStreamer:
+      enabled: true
+    KStreamShipmentStreamer:
+      enabled: true

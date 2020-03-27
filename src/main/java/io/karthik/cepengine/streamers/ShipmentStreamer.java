@@ -5,12 +5,14 @@ import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.integration.annotation.Transformer;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
+@ConditionalOnProperty(name = "cep-properties.processors.ShipmentStreamer.enabled", havingValue="true")
 @EnableBinding(StreamingIOInterface.class)
 @Component
 public class ShipmentStreamer {
@@ -25,7 +27,7 @@ public class ShipmentStreamer {
   }
 
   @Transformer(inputChannel = StreamingIOInterface.INPUT, outputChannel = StreamingIOInterface.OUTPUT)
-  public Message<GenericRecord> process(Message<GenericRecord> event) {
+  public Message<GenericRecord> transformStream(Message<GenericRecord> event) {
     // TODO: Recode this section
     log.info("Event received with Id: {}", event.getPayload().get("id"));
     GenericRecord payload = event.getPayload();
