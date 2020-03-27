@@ -1,4 +1,4 @@
-package io.karthik.cepengine.streamers;
+package io.karthik.cepengine.processors;
 
 
 import org.springframework.cloud.stream.annotation.Input;
@@ -6,10 +6,10 @@ import org.springframework.cloud.stream.annotation.Output;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.SubscribableChannel;
 
-public interface StreamingIOInterface {
+public interface KafkaEventIOInterface {
 
-    String INPUT = "InputTopic";
-    String OUTPUT = "OutputTopic";
+    String INPUT = "input-topic";
+    String OUTPUT = "output-topic";
 
     @Input(INPUT)
     SubscribableChannel input();

@@ -1,10 +1,12 @@
-package io.karthik.cepengine.streamers;
+package io.karthik.cepengine.processors.event;
 
+import io.karthik.cepengine.processors.KafkaEventIOInterface;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.integration.annotation.Transformer;
@@ -12,21 +14,20 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
-@ConditionalOnProperty(name = "cep-properties.processors.ShipmentStreamer.enabled", havingValue="true")
-@EnableBinding(StreamingIOInterface.class)
 @Component
-public class ShipmentStreamer {
+@EnableBinding(KafkaEventIOInterface.class)
+@ConditionalOnProperty(name = "cep-properties.processors.shipment-event-transformer.enabled", havingValue="true")
+public class ShipmentEventTransformer {
 
-  private final Logger log = LoggerFactory.getLogger(ShipmentStreamer.class);
+  private final Logger log = LoggerFactory.getLogger(ShipmentEventTransformer.class);
 
   private Schema schema;
-
   // Injecting necessary dependencies
-  public ShipmentStreamer(Schema schema) {
+  public ShipmentEventTransformer (@Qualifier("ShipmentEventOutputSchema") Schema schema) {
     this.schema = schema;
   }
 
-  @Transformer(inputChannel = StreamingIOInterface.INPUT, outputChannel = StreamingIOInterface.OUTPUT)
+  @Transformer(inputChannel = KafkaEventIOInterface.INPUT, outputChannel = KafkaEventIOInterface.OUTPUT)
   public Message<GenericRecord> transformStream(Message<GenericRecord> event) {
     // TODO: Recode this section
     log.info("Event received with Id: {}", event.getPayload().get("id"));
