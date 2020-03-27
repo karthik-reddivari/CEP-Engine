@@ -1,0 +1,87 @@
+# Server Config
+server:
+  port: 9009
+#Spring config
+spring:
+  cloud:
+    stream:
+      ## Defining the binders involved
+      binders:
+        # Kafka binder configuration
+        kafka:
+          type: kafka
+          environment:
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    binder:
+                      brokers: localhost
+                      defaultBrokerPort: 9093
+                      producer-properties:
+                        client.id: Cep-Engine
+                        schema.registry.url: http://localhost:8081
+                        requiredAcks: 1
+                        value.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+                        key.serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+                      consumer-properties:
+                        schema.registry.url: http://localhost:8081
+                        value.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+                        key.deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+        # KStreams binder configuration
+        kstream:
+          type: kstream
+          environment:
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    streams:
+                      binder:
+                        brokers: localhost:9093
+                        configuration:
+                          commit.interval.mms: 1000
+                          schema.registry.url: http://localhost:8081
+                          default.key.serde: io.confluent.kafka.streams.serdes.avro.GenericAvroSerde
+                          default.value.serde: io.confluent.kafka.streams.serdes.avro.GenericAvroSerde
+                          group.id: shipment-stream-consumer
+      # Binding for input and output channels
+      bindings:
+        # Event processing input topic
+        input-topic:
+          destination: shipment
+          group: shipment-event-consumer
+          content-type: application/*+avro
+          binder: kafka
+        # Event processing output topic
+        output-topic:
+          destination: shipment-anomaly
+          group: shipment-filtered-producer
+          content-type: application/*+avro
+          binder: kafka
+          producer:
+            use-native-encoding: true
+        # Stream processing input topic
+        kstream-input-topic:
+          destination: shipment
+          group: shipment-stream-consumer
+          binder: kstream
+          applicationId: shipment-stream-consumer
+        # Stream processing output topic
+        kstream-output-topic:
+          destination: shipment-stream-anomaly-only
+          group: shipment-stream-consumer
+          binder: kstream
+          applicationId: shipment-stream-producer
+# Logging Config
+logging:
+  level:
+    root: INFO
+# Custom properties
+cep-properties:
+  processors:
+    shipment-event-transformer:
+      enabled: true
+      output-topic-schema-location: ${SHIPMENT_EVENT_OUTPUT_SCHEMA_LOCATION:/home/vsts/work/1/s/src/main/resources/schemas/ShipmentAnomalyDetected.avsc}
+    kstream-shipment-streamer:
+      enabled: true

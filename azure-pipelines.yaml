@@ -77,7 +77,7 @@ steps:
     env:
       DOCKER_USERNAME: $(DOCKER_USERNAME)
       DOCKER_PASSWORD: $(DOCKER_PASSWORD)
-    displayName: 'Logging in to docker'
+    displayName: 'Configuring docker'
 
   - task: Gradle@2
     displayName: 'Publishing docker image'

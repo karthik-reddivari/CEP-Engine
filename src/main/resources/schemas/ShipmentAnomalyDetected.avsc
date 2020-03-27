@@ -1,0 +1,31 @@
+{
+  "fields": [
+    {
+      "name": "id",
+      "type": "long"
+    },
+    {
+      "name": "country",
+      "type": "string"
+    },
+    {
+      "name": "price",
+      "type": "float"
+    },
+    {
+      "name": "quantity",
+      "type": "long"
+    },
+    {
+      "name": "product",
+      "type": "string"
+    },
+    {
+      "name": "anomaly",
+      "type": "boolean"
+    }
+  ],
+  "name": "Value",
+  "namespace": "io.karthik.cepengine.ShipmentAnomalyDetected",
+  "type": "record"
+}
