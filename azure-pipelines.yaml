@@ -20,12 +20,6 @@ steps:
   - checkout: self
     persistCredentials: true
 
-  - script: |
-      ls -ltrha
-      pwd
-      ls ./src/main/resources/schemas
-    displayName: 'Random checks'
-
   - task: Gradle@2
     displayName: 'Running tests and Building artifacts'
     inputs:

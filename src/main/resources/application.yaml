@@ -82,6 +82,6 @@ cep-properties:
   processors:
     shipment-event-transformer:
       enabled: true
-      output-topic-schema-location: ${SHIPMENT_EVENT_OUTPUT_SCHEMA_LOCATION}
+      output-topic-schema-location: ${SHIPMENT_EVENT_OUTPUT_SCHEMA_LOCATION:/home/vsts/work/1/s/src/main/resources/schemas/ShipmentAnomalyDetected.avsc}
     kstream-shipment-streamer:
       enabled: true
